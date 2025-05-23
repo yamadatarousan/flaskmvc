@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>エラー</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .error-container {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>エラーが発生しました</h1>
+        <p>{{ error }}</p>
+        <p><a href="/">ホームに戻る</a></p>
+        <p><a href="/users">ユーザー一覧に戻る</a></p>
+    </div>
+</body>
+</html> 
