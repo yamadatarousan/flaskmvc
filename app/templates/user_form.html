@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if action == 'create' %}
+        ユーザー登録
+    {% else %}
+        ユーザー編集
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>
+            {% if action == 'create' %}
+                ユーザー登録
+            {% else %}
+                ユーザー編集：{{ user.name }}
+            {% endif %}
+        </h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.csrf_token }}
+            {{ form.id }}
+            
+            <div class="mb-3">
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                {% if form.name.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                {% if form.email.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('user.list_users') }}" class="btn btn-secondary">キャンセル</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

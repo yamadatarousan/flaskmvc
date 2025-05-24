@@ -1,9 +1,11 @@
 # app/__init__.py
 from flask import Flask, render_template, render_template_string
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 import logging
 
 db = SQLAlchemy()
+csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
@@ -17,7 +19,9 @@ def create_app():
         logging.basicConfig(level=logging.DEBUG)
         app.logger.setLevel(logging.DEBUG)
     
+    # 拡張機能の初期化
     db.init_app(app)
+    csrf.init_app(app)
 
     # ルーティング設定
     from app.controllers import user_controller
@@ -62,5 +66,16 @@ def create_app():
         </body>
         </html>
         """, 403
+        
+    @app.errorhandler(404)
+    def not_found_error(error):
+        app.logger.error(f"404 Error: {error}")
+        return render_template('error.html', error="ページが見つかりません。"), 404
+        
+    @app.errorhandler(500)
+    def internal_error(error):
+        app.logger.error(f"500 Error: {error}")
+        db.session.rollback()
+        return render_template('error.html', error="内部サーバーエラーが発生しました。"), 500
 
     return app
