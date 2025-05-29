@@ -12,8 +12,7 @@ class Profile(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Userモデルとの関連付け
-    user = db.relationship('User', backref=db.backref('profile', uselist=False))
+    # リレーションシップはUserモデル側のbackrefで自動生成される
 
     def __repr__(self):
         return f'<Profile {self.id}>' 

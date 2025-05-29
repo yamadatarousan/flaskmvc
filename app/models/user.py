@@ -10,8 +10,11 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Taskモデルとの関連付け
-    tasks = db.relationship('Task', backref='user', lazy=True)
+    # Taskモデルとの関連付け（カスケード削除を設定）
+    tasks = db.relationship('Task', backref='user', lazy=True, cascade='all, delete-orphan')
+    
+    # Profileモデルとの関連付け（カスケード削除を設定）
+    profile = db.relationship('Profile', backref='user', uselist=False, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<User {self.name}>'
