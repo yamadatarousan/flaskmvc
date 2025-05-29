@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 import logging
 
+# グローバル変数として宣言
 db = SQLAlchemy()
 csrf = CSRFProtect()
 
@@ -25,8 +26,12 @@ def create_app():
 
     # ルーティング設定
     from app.controllers import user_controller
+    from app.controllers.task_controller import task_bp
+    from app.controllers.profile_controller import profile_bp
     app.register_blueprint(user_controller.bp)
     app.register_blueprint(user_controller.root_bp)
+    app.register_blueprint(task_bp)
+    app.register_blueprint(profile_bp)
     
     # シンプルなテストルート
     @app.route('/test')

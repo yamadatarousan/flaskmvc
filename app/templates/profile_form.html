@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+
+{% block title %}プロファイル{{ action }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>プロファイル{{ action }}</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.birth_date.label(class="form-label") }}
+                {{ form.birth_date(class="form-control" + (" is-invalid" if form.birth_date.errors else "")) }}
+                {% if form.birth_date.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.birth_date.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.address.label(class="form-label") }}
+                {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else "")) }}
+                {% if form.address.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.address.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.phone_number.label(class="form-label") }}
+                {{ form.phone_number(class="form-control" + (" is-invalid" if form.phone_number.errors else "")) }}
+                {% if form.phone_number.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.phone_number.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.user_id.label(class="form-label") }}
+                {{ form.user_id(class="form-select" + (" is-invalid" if form.user_id.errors else "")) }}
+                {% if form.user_id.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.user_id.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">{{ action }}</button>
+                <a href="{{ url_for('profile.profile_list') }}" class="btn btn-secondary">キャンセル</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

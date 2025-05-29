@@ -25,11 +25,32 @@
                     </button>
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('user.list_users') }}">ユーザー一覧</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                    ユーザー
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ url_for('user.list_users') }}">ユーザー一覧</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('user.create_user') }}">ユーザー登録</a></li>
+                                </ul>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('user.create_user') }}">ユーザー登録</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="taskDropdown" role="button" data-bs-toggle="dropdown">
+                                    タスク
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ url_for('task.task_list') }}">タスク一覧</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('task.create_task') }}">タスク作成</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
+                                    プロファイル
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ url_for('profile.profile_list') }}">プロファイル一覧</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('profile.create_profile') }}">プロファイル作成</a></li>
+                                </ul>
                             </li>
                         </ul>
                     </div>

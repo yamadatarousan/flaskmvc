@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}プロファイル一覧{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>プロファイル一覧</h2>
+        <a href="{{ url_for('profile.create_profile') }}" class="btn btn-primary">新規プロファイル作成</a>
+    </div>
+    <div class="card-body">
+        {% if profiles %}
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ユーザー名</th>
+                        <th>生年月日</th>
+                        <th>住所</th>
+                        <th>電話番号</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+        {% for profile in profiles %}
+                    <tr>
+                        <td>{{ profile.id }}</td>
+                        <td>
+                            <a href="{{ url_for('profile.profile_detail', profile_id=profile.id) }}" class="text-decoration-none">
+                                {{ profile.user.name }}
+                            </a>
+                        </td>
+                        <td>{{ profile.birth_date.strftime('%Y-%m-%d') if profile.birth_date else '-' }}</td>
+                        <td>{{ profile.address or '-' }}</td>
+                        <td>{{ profile.phone_number or '-' }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('profile.edit_profile', profile_id=profile.id) }}" class="btn btn-sm btn-outline-primary">編集</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                    onclick="confirmDeleteProfile('{{ profile.id }}', '{{ profile.user.name }}')">削除</button>
+                            </div>
+                        </td>
+                    </tr>
+        {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info">
+                プロファイルが登録されていません。
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 削除確認モーダル -->
+<div class="modal fade" id="deleteProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">プロファイル削除の確認</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteProfileConfirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <form id="deleteProfileForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-danger">削除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDeleteProfile(profileId, userName) {
+        document.getElementById('deleteProfileConfirmMessage').textContent = `「${userName}」のプロファイルを削除してもよろしいですか？`;
+        document.getElementById('deleteProfileForm').action = `/profiles/${profileId}/delete`;
+        
+        // モーダルを表示
+        var modal = new bootstrap.Modal(document.getElementById('deleteProfileModal'));
+        modal.show();
+    }
+</script>
+{% endblock %} 

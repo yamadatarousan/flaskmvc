@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %}プロファイル詳細{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>プロファイル詳細</h2>
+        <div class="btn-group">
+            <a href="{{ url_for('profile.edit_profile', profile_id=profile.id) }}" class="btn btn-primary">編集</a>
+            <a href="{{ url_for('profile.profile_list') }}" class="btn btn-secondary">一覧に戻る</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">ID:</dt>
+            <dd class="col-sm-9">{{ profile.id }}</dd>
+
+            <dt class="col-sm-3">ユーザー名:</dt>
+            <dd class="col-sm-9">{{ profile.user.name }}</dd>
+
+            <dt class="col-sm-3">メールアドレス:</dt>
+            <dd class="col-sm-9">{{ profile.user.email }}</dd>
+
+            <dt class="col-sm-3">生年月日:</dt>
+            <dd class="col-sm-9">{{ profile.birth_date.strftime('%Y-%m-%d') if profile.birth_date else '-' }}</dd>
+
+            <dt class="col-sm-3">住所:</dt>
+            <dd class="col-sm-9">{{ profile.address or '-' }}</dd>
+
+            <dt class="col-sm-3">電話番号:</dt>
+            <dd class="col-sm-9">{{ profile.phone_number or '-' }}</dd>
+
+            <dt class="col-sm-3">作成日時:</dt>
+            <dd class="col-sm-9">{{ profile.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+
+            <dt class="col-sm-3">更新日時:</dt>
+            <dd class="col-sm-9">{{ profile.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %} 

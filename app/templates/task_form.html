@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}タスク{{ action }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>タスク{{ action }}</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                {% if form.title.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.title.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control", rows="4") }}
+                {% if form.description.errors %}
+                    <div class="text-danger">
+                        {% for error in form.description.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.status.label(class="form-label") }}
+                {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                {% if form.status.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.status.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.due_date.label(class="form-label") }}
+                {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else "")) }}
+                {% if form.due_date.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.due_date.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.user_id.label(class="form-label") }}
+                {{ form.user_id(class="form-select" + (" is-invalid" if form.user_id.errors else "")) }}
+                {% if form.user_id.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.user_id.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">{{ action }}</button>
+                <a href="{{ url_for('task.task_list') }}" class="btn btn-secondary">キャンセル</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
