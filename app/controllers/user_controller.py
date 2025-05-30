@@ -4,10 +4,7 @@ from flask_login import login_required
 from app.models.user import User
 from app.forms.user_form import UserForm
 from app import db
-import logging
-
-# ログ設定
-logger = logging.getLogger(__name__)
+from app.utils import log_info, log_error
 
 bp = Blueprint('user', __name__, url_prefix='/users')
 
@@ -16,12 +13,12 @@ bp = Blueprint('user', __name__, url_prefix='/users')
 @login_required
 def list_users():
     try:
-        logger.info("Accessing user list route")
+        log_info("Accessing user list route from user_controller")
         users = User.query.all()
-        logger.info(f"Found {len(users)} users")
+        log_info(f"Found {len(users)} users in user_controller")
         return render_template('user_list.html', users=users)
     except Exception as e:
-        logger.error(f"Error in list_users: {e}")
+        log_error(f"Error in list_users: {e}")
         return render_template('error.html', error=str(e)), 500
 
 @bp.route('/create', methods=['GET', 'POST'])
@@ -35,11 +32,12 @@ def create_user():
             user.set_password('password123')  # デフォルトパスワードを設定
             db.session.add(user)
             db.session.commit()
+            log_info(f"User created: {user.name} ({user.email})")
             flash('ユーザーが作成されました', 'success')
             return redirect(url_for('user.list_users'))
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Error creating user: {e}")
+            log_error(f"Error creating user: {e}")
             flash(f'ユーザー作成中にエラーが発生しました: {e}', 'danger')
     
     return render_template('user_form.html', form=form, action='create')
@@ -57,14 +55,16 @@ def edit_user(user_id):
     
     if form.validate_on_submit():
         try:
+            old_name = user.name
             user.name = form.name.data
             user.email = form.email.data
             db.session.commit()
+            log_info(f"User updated: {old_name} -> {user.name} ({user.email})")
             flash('ユーザーが更新されました', 'success')
             return redirect(url_for('user.list_users'))
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Error updating user: {e}")
+            log_error(f"Error updating user: {e}")
             flash(f'ユーザー更新中にエラーが発生しました: {e}', 'danger')
     
     return render_template('user_form.html', form=form, user=user, action='edit')
@@ -75,12 +75,14 @@ def delete_user(user_id):
     """ユーザー削除"""
     user = User.query.get_or_404(user_id)
     try:
+        user_name = user.name
         db.session.delete(user)
         db.session.commit()
+        log_info(f"User deleted: {user_name}")
         flash('ユーザーが削除されました', 'success')
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error deleting user: {e}")
+        log_error(f"Error deleting user: {e}")
         flash(f'ユーザー削除中にエラーが発生しました: {e}', 'danger')
     
     return redirect(url_for('user.list_users'))
@@ -92,8 +94,8 @@ root_bp = Blueprint('root', __name__)
 def index():
     """ホームページ - ログイン不要"""
     try:
-        logger.info("Accessing root index route")
+        log_info("Accessing root index route from user_controller.py")
         return render_template('home.html')
     except Exception as e:
-        logger.error(f"Error in index: {e}")
+        log_error(f"Error in index: {e}")
         return render_template('error.html', error=str(e)), 500

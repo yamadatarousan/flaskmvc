@@ -3,6 +3,8 @@ from flask import Flask, render_template, render_template_string
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 import logging
+from logging.handlers import RotatingFileHandler
+import os
 from flask_login import LoginManager
 from config import Config
 
@@ -11,9 +13,68 @@ db = SQLAlchemy()
 csrf = CSRFProtect()
 login_manager = LoginManager()
 
+def setup_logging(app):
+    """ログ設定のセットアップ"""
+    if not app.debug and not app.testing:
+        # 本番環境用のログ設定
+        log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'))
+    else:
+        # 開発環境用のログ設定
+        log_level = logging.DEBUG
+    
+    # ログディレクトリの作成
+    log_dir = app.config.get('LOG_DIR')
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # ファイルハンドラーの設定
+    if log_dir:
+        file_handler = RotatingFileHandler(
+            app.config.get('LOG_FILE'),
+            maxBytes=app.config.get('LOG_MAX_BYTES', 10*1024*1024),
+            backupCount=app.config.get('LOG_BACKUP_COUNT', 5),
+            encoding='utf-8'
+        )
+        file_handler.setLevel(log_level)
+        
+        # ログフォーマットの設定
+        formatter = logging.Formatter(
+            '[%(asctime)s] %(levelname)s in %(module)s (%(pathname)s:%(lineno)d): %(message)s'
+        )
+        file_handler.setFormatter(formatter)
+        
+        # アプリのロガーに追加
+        app.logger.addHandler(file_handler)
+        app.logger.setLevel(log_level)
+        
+        # Werkzeug（Flask内部）のログも同じファイルに出力
+        werkzeug_logger = logging.getLogger('werkzeug')
+        werkzeug_logger.addHandler(file_handler)
+        werkzeug_logger.setLevel(log_level)
+        
+        # SQLAlchemyのログも追加
+        sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
+        if app.debug:
+            sqlalchemy_logger.addHandler(file_handler)
+            sqlalchemy_logger.setLevel(logging.INFO)
+    
+    # コンソール出力の設定
+    if not app.logger.handlers:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(log_level)
+        console_formatter = logging.Formatter(
+            '%(levelname)s: %(message)s'
+        )
+        console_handler.setFormatter(console_formatter)
+        app.logger.addHandler(console_handler)
+        app.logger.setLevel(log_level)
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    
+    # ログ設定のセットアップ
+    setup_logging(app)
     
     # 初期化
     db.init_app(app)
