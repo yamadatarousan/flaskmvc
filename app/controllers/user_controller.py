@@ -1,5 +1,6 @@
 # app/controllers/user_controller.py
 from flask import Blueprint, render_template, current_app, request, redirect, url_for, flash
+from flask_login import login_required
 from app.models.user import User
 from app.forms.user_form import UserForm
 from app import db
@@ -12,6 +13,7 @@ bp = Blueprint('user', __name__, url_prefix='/users')
 
 @bp.route('/')
 @bp.route('')
+@login_required
 def list_users():
     try:
         logger.info("Accessing user list route")
@@ -23,12 +25,14 @@ def list_users():
         return render_template('error.html', error=str(e)), 500
 
 @bp.route('/create', methods=['GET', 'POST'])
+@login_required
 def create_user():
     """新規ユーザー作成"""
     form = UserForm()
     if form.validate_on_submit():
         try:
             user = User(name=form.name.data, email=form.email.data)
+            user.set_password('password123')  # デフォルトパスワードを設定
             db.session.add(user)
             db.session.commit()
             flash('ユーザーが作成されました', 'success')
@@ -41,6 +45,7 @@ def create_user():
     return render_template('user_form.html', form=form, action='create')
 
 @bp.route('/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit_user(user_id):
     """ユーザー編集"""
     user = User.query.get_or_404(user_id)
@@ -65,6 +70,7 @@ def edit_user(user_id):
     return render_template('user_form.html', form=form, user=user, action='edit')
 
 @bp.route('/<int:user_id>/delete', methods=['POST'])
+@login_required
 def delete_user(user_id):
     """ユーザー削除"""
     user = User.query.get_or_404(user_id)
@@ -84,11 +90,10 @@ root_bp = Blueprint('root', __name__)
 
 @root_bp.route('/')
 def index():
+    """ホームページ - ログイン不要"""
     try:
         logger.info("Accessing root index route")
-        users = User.query.all()
-        logger.info(f"Found {len(users)} users for root index")
-        return render_template('user_list.html', users=users)
+        return render_template('home.html')
     except Exception as e:
         logger.error(f"Error in index: {e}")
         return render_template('error.html', error=str(e)), 500

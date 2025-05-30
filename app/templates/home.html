@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+
+{% block title %}ホーム{% endblock %}
+
+{% block content %}
+<div class="jumbotron bg-light p-5 rounded-3 mb-4">
+    <h1 class="display-4">Flask MVC アプリケーション</h1>
+    <p class="lead">ユーザー、タスク、プロファイル管理システムです。</p>
+    
+    {% if current_user.is_authenticated %}
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">ようこそ、{{ current_user.name }}さん！</h4>
+            <p>ログイン中です。以下の機能をご利用いただけます：</p>
+            <ul>
+                <li>ユーザー管理</li>
+                <li>タスク管理</li>
+                <li>プロファイル管理</li>
+            </ul>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">ユーザー管理</h5>
+                        <p class="card-text">ユーザーの作成・編集・削除を行います。</p>
+                        <a href="{{ url_for('user.list_users') }}" class="btn btn-primary">ユーザー一覧</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">タスク管理</h5>
+                        <p class="card-text">タスクの作成・編集・削除を行います。</p>
+                        <a href="{{ url_for('task.task_list') }}" class="btn btn-primary">タスク一覧</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">プロファイル管理</h5>
+                        <p class="card-text">ユーザープロファイルの作成・編集・削除を行います。</p>
+                        <a href="{{ url_for('profile.profile_list') }}" class="btn btn-primary">プロファイル一覧</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">ログインが必要です</h4>
+            <p>このアプリケーションの機能を利用するには、ログインまたは新規登録が必要です。</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="d-grid gap-2 d-md-block text-center">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">ログイン</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg">新規登録</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="row">
+    <div class="col-12">
+        <h3>最近の活動</h3>
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text">ダッシュボード機能は今後実装予定です。</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

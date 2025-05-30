@@ -3,35 +3,41 @@ from flask import Flask, render_template, render_template_string
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 import logging
+from flask_login import LoginManager
+from config import Config
 
 # グローバル変数として宣言
 db = SQLAlchemy()
 csrf = CSRFProtect()
+login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config.Config')
+    app.config.from_object(Config)
     
-    # URLの末尾スラッシュを無視する設定
-    app.url_map.strict_slashes = False
-    
-    # ログ設定
-    if app.debug:
-        logging.basicConfig(level=logging.DEBUG)
-        app.logger.setLevel(logging.DEBUG)
-    
-    # 拡張機能の初期化
+    # 初期化
     db.init_app(app)
     csrf.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'ログインが必要です。'
+    login_manager.login_message_category = 'warning'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        from app.models.user import User
+        return User.query.get(int(user_id))
 
     # ルーティング設定
     from app.controllers import user_controller
     from app.controllers.task_controller import task_bp
     from app.controllers.profile_controller import profile_bp
+    from app.controllers.auth_controller import auth_bp
     app.register_blueprint(user_controller.bp)
     app.register_blueprint(user_controller.root_bp)
     app.register_blueprint(task_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(auth_bp)
     
     # シンプルなテストルート
     @app.route('/test')

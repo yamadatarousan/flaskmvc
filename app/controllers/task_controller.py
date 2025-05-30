@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from app import db
 from app.models.task import Task
 from app.models.user import User
@@ -7,12 +8,14 @@ from app.forms.task_form import TaskForm
 task_bp = Blueprint('task', __name__)
 
 @task_bp.route('/tasks')
+@login_required
 def task_list():
     """タスク一覧表示"""
     tasks = Task.query.join(User).all()
     return render_template('task_list.html', tasks=tasks)
 
 @task_bp.route('/tasks/create', methods=['GET', 'POST'])
+@login_required
 def create_task():
     """タスク新規作成"""
     form = TaskForm()
@@ -41,6 +44,7 @@ def create_task():
     return render_template('task_form.html', form=form, users=users, action='新規作成')
 
 @task_bp.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit_task(task_id):
     """タスク編集"""
     task = Task.query.get_or_404(task_id)
@@ -67,6 +71,7 @@ def edit_task(task_id):
     return render_template('task_form.html', form=form, users=users, task=task, action='編集')
 
 @task_bp.route('/tasks/<int:task_id>/delete', methods=['POST'])
+@login_required
 def delete_task(task_id):
     """タスク削除"""
     task = Task.query.get_or_404(task_id)
@@ -82,6 +87,7 @@ def delete_task(task_id):
     return redirect(url_for('task.task_list'))
 
 @task_bp.route('/tasks/<int:task_id>')
+@login_required
 def task_detail(task_id):
     """タスク詳細表示"""
     task = Task.query.get_or_404(task_id)

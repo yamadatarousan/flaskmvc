@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from app import db
 from app.models.profile import Profile
 from app.models.user import User
@@ -7,12 +8,14 @@ from app.forms.profile_form import ProfileForm
 profile_bp = Blueprint('profile', __name__)
 
 @profile_bp.route('/profiles')
+@login_required
 def profile_list():
     """プロファイル一覧表示"""
     profiles = Profile.query.join(User).all()
     return render_template('profile_list.html', profiles=profiles)
 
 @profile_bp.route('/profiles/create', methods=['GET', 'POST'])
+@login_required
 def create_profile():
     """プロファイル新規作成"""
     form = ProfileForm()
@@ -46,6 +49,7 @@ def create_profile():
     return render_template('profile_form.html', form=form, users=users, action='新規作成')
 
 @profile_bp.route('/profiles/<int:profile_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit_profile(profile_id):
     """プロファイル編集"""
     profile = Profile.query.get_or_404(profile_id)
@@ -78,6 +82,7 @@ def edit_profile(profile_id):
     return render_template('profile_form.html', form=form, users=users, profile=profile, action='編集')
 
 @profile_bp.route('/profiles/<int:profile_id>/delete', methods=['POST'])
+@login_required
 def delete_profile(profile_id):
     """プロファイル削除"""
     profile = Profile.query.get_or_404(profile_id)
@@ -93,6 +98,7 @@ def delete_profile(profile_id):
     return redirect(url_for('profile.profile_list'))
 
 @profile_bp.route('/profiles/<int:profile_id>')
+@login_required
 def profile_detail(profile_id):
     """プロファイル詳細表示"""
     profile = Profile.query.get_or_404(profile_id)
