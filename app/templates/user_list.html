@@ -8,37 +8,159 @@
         <h2>ユーザー一覧</h2>
         <a href="{{ url_for('user.create_user') }}" class="btn btn-primary">新規ユーザー作成</a>
     </div>
+    
+    <!-- 検索・フィルタリングセクション -->
+    <div class="card-body border-bottom">
+        <form method="GET" id="searchForm">
+            <div class="row g-3 align-items-end">
+                <!-- 検索ボックス -->
+                <div class="col-md-4">
+                    <label for="search" class="form-label">検索</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search_query }}" placeholder="名前またはメールアドレスで検索">
+                </div>
+                
+                <!-- ソート -->
+                <div class="col-md-3">
+                    <label for="sort" class="form-label">ソート</label>
+                    <select class="form-select" id="sort" name="sort">
+                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>名前</option>
+                        <option value="email" {% if sort_by == 'email' %}selected{% endif %}>メールアドレス</option>
+                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>登録日</option>
+                    </select>
+                </div>
+                
+                <!-- 順序 -->
+                <div class="col-md-2">
+                    <label for="order" class="form-label">順序</label>
+                    <select class="form-select" id="order" name="order">
+                        <option value="asc" {% if order == 'asc' %}selected{% endif %}>昇順</option>
+                        <option value="desc" {% if order == 'desc' %}selected{% endif %}>降順</option>
+                    </select>
+                </div>
+                
+                <!-- ボタン -->
+                <div class="col-md-3">
+                    <div class="btn-group w-100" role="group">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i> 検索
+                        </button>
+                        <a href="{{ url_for('user.list_users') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> クリア
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- 統計情報 -->
+    <div class="card-body border-bottom bg-light">
+        <div class="row text-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-users text-primary me-2"></i>
+                    <span><strong>表示中:</strong> {{ filtered_count }} / {{ total_count }} 件</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                {% if search_query or sort_by != 'name' or order != 'asc' %}
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-filter text-info me-2"></i>
+                    <span class="text-info">フィルター適用中</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
     <div class="card-body">
         {% if users %}
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>名前</th>
-                        <th>メールアドレス</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.id }}</td>
-                        <td>{{ user.name }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a href="{{ url_for('user.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">編集</a>
-                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                    onclick="confirmDelete('{{ user.id }}', '{{ user.name }}')">削除</button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="#" onclick="sortBy('id')" class="text-decoration-none">
+                                    ID
+                                    {% if sort_by == 'id' %}
+                                        <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="#" onclick="sortBy('name')" class="text-decoration-none">
+                                    名前
+                                    {% if sort_by == 'name' %}
+                                        <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="#" onclick="sortBy('email')" class="text-decoration-none">
+                                    メールアドレス
+                                    {% if sort_by == 'email' %}
+                                        <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="#" onclick="sortBy('created_at')" class="text-decoration-none">
+                                    登録日
+                                    {% if sort_by == 'created_at' %}
+                                        <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-circle text-muted me-2"></i>
+                                    {{ user.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-envelope text-muted me-2"></i>
+                                    {{ user.email }}
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ user.created_at.strftime('%Y/%m/%d %H:%M') if user.created_at }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('user.edit_user', user_id=user.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="編集">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="confirmDelete('{{ user.id }}', '{{ user.name }}')" title="削除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <div class="alert alert-info">
-                ユーザーが登録されていません。
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                {% if search_query %}
+                    「{{ search_query }}」に一致するユーザーが見つかりません。
+                {% else %}
+                    ユーザーが登録されていません。
+                {% endif %}
             </div>
         {% endif %}
     </div>
@@ -67,13 +189,49 @@
 </div>
 
 <script>
-    function confirmDelete(userId, userName) {
-        document.getElementById('deleteConfirmMessage').textContent = `「${userName}」を削除してもよろしいですか？`;
-        document.getElementById('deleteForm').action = `/users/${userId}/delete`;
-        
-        // モーダルを表示
-        var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        modal.show();
+function confirmDelete(userId, userName) {
+    document.getElementById('deleteConfirmMessage').textContent = `「${userName}」を削除してもよろしいですか？`;
+    document.getElementById('deleteForm').action = `/users/${userId}/delete`;
+    
+    // モーダルを表示
+    var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function sortBy(column) {
+    const form = document.getElementById('searchForm');
+    const currentSort = '{{ sort_by }}';
+    const currentOrder = '{{ order }}';
+    
+    // ソート列を設定
+    document.getElementById('sort').value = column;
+    
+    // 同じ列の場合は順序を切り替え、違う列の場合は昇順
+    if (currentSort === column) {
+        document.getElementById('order').value = currentOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        document.getElementById('order').value = 'asc';
     }
+    
+    form.submit();
+}
+
+// リアルタイム検索（デバウンス付き）
+let searchTimeout;
+document.getElementById('search').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() {
+        document.getElementById('searchForm').submit();
+    }, 500);
+});
+
+// フィルター変更時の自動送信
+document.getElementById('sort').addEventListener('change', function() {
+    document.getElementById('searchForm').submit();
+});
+
+document.getElementById('order').addEventListener('change', function() {
+    document.getElementById('searchForm').submit();
+});
 </script>
 {% endblock %}

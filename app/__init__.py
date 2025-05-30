@@ -7,11 +7,31 @@ from logging.handlers import RotatingFileHandler
 import os
 from flask_login import LoginManager
 from config import Config
+from datetime import datetime, date
 
 # グローバル変数として宣言
 db = SQLAlchemy()
 csrf = CSRFProtect()
 login_manager = LoginManager()
+
+def calculate_age(birth_date):
+    """生年月日から年齢を計算"""
+    if not birth_date:
+        return 0
+    
+    today = date.today()
+    
+    # birth_dateがdatetimeオブジェクトの場合はdateに変換
+    if isinstance(birth_date, datetime):
+        birth_date = birth_date.date()
+    
+    age = today.year - birth_date.year
+    
+    # 誕生日がまだ来ていない場合は1を引く
+    if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
+        age -= 1
+    
+    return age
 
 def setup_logging(app):
     """ログ設定のセットアップ"""
@@ -83,6 +103,11 @@ def create_app():
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'ログインが必要です。'
     login_manager.login_message_category = 'warning'
+
+    # カスタムフィルターの登録
+    @app.template_filter('age')
+    def age_filter(birth_date):
+        return calculate_age(birth_date)
 
     @login_manager.user_loader
     def load_user(user_id):

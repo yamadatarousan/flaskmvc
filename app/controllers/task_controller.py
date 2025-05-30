@@ -4,6 +4,8 @@ from app import db
 from app.models.task import Task
 from app.models.user import User
 from app.forms.task_form import TaskForm
+from sqlalchemy import or_, and_
+from datetime import datetime
 
 task_bp = Blueprint('task', __name__)
 
@@ -11,8 +13,112 @@ task_bp = Blueprint('task', __name__)
 @login_required
 def task_list():
     """タスク一覧表示"""
-    tasks = Task.query.join(User).all()
-    return render_template('task_list.html', tasks=tasks)
+    # 検索・フィルタリングパラメータを取得
+    search_query = request.args.get('search', '')
+    status_filter = request.args.get('status', '')
+    user_filter = request.args.get('user', '')
+    due_date_filter = request.args.get('due_date', '')
+    sort_by = request.args.get('sort', 'created_at')
+    order = request.args.get('order', 'desc')
+    
+    # ベースクエリ
+    query = Task.query.join(User)
+    
+    # 検索条件を適用
+    if search_query:
+        search_pattern = f"%{search_query}%"
+        query = query.filter(
+            or_(
+                Task.title.ilike(search_pattern),
+                Task.description.ilike(search_pattern),
+                User.name.ilike(search_pattern)
+            )
+        )
+    
+    # ステータスフィルター
+    if status_filter:
+        query = query.filter(Task.status == status_filter)
+    
+    # ユーザーフィルター
+    if user_filter:
+        query = query.filter(Task.user_id == user_filter)
+    
+    # 期限フィルター
+    if due_date_filter:
+        today = datetime.now().date()
+        if due_date_filter == 'overdue':
+            query = query.filter(and_(Task.due_date < today, Task.status != 'completed'))
+        elif due_date_filter == 'today':
+            query = query.filter(Task.due_date == today)
+        elif due_date_filter == 'this_week':
+            from datetime import timedelta
+            week_end = today + timedelta(days=7)
+            query = query.filter(and_(Task.due_date >= today, Task.due_date <= week_end))
+    
+    # ソート条件を適用
+    if sort_by == 'title':
+        if order == 'desc':
+            query = query.order_by(Task.title.desc())
+        else:
+            query = query.order_by(Task.title.asc())
+    elif sort_by == 'status':
+        if order == 'desc':
+            query = query.order_by(Task.status.desc())
+        else:
+            query = query.order_by(Task.status.asc())
+    elif sort_by == 'due_date':
+        if order == 'desc':
+            query = query.order_by(Task.due_date.desc())
+        else:
+            query = query.order_by(Task.due_date.asc())
+    elif sort_by == 'user':
+        if order == 'desc':
+            query = query.order_by(User.name.desc())
+        else:
+            query = query.order_by(User.name.asc())
+    else:  # created_at
+        if order == 'desc':
+            query = query.order_by(Task.created_at.desc())
+        else:
+            query = query.order_by(Task.created_at.asc())
+    
+    tasks = query.all()
+    users_for_filter = User.query.all()
+    total_count = Task.query.count()
+    filtered_count = len(tasks)
+    
+    # 各タスクに日付状態を追加
+    today = datetime.now().date()
+    for task in tasks:
+        if task.due_date:
+            if task.due_date < today and task.status != 'completed':
+                task.date_status = 'overdue'
+            elif task.due_date == today:
+                task.date_status = 'today'
+            else:
+                task.date_status = 'normal'
+        else:
+            task.date_status = 'none'
+    
+    # ステータス統計
+    status_counts = {
+        'pending': Task.query.filter_by(status='pending').count(),
+        'in_progress': Task.query.filter_by(status='in_progress').count(),
+        'completed': Task.query.filter_by(status='completed').count()
+    }
+    
+    return render_template('task_list.html', 
+                         tasks=tasks,
+                         users_for_filter=users_for_filter,
+                         search_query=search_query,
+                         status_filter=status_filter,
+                         user_filter=user_filter,
+                         due_date_filter=due_date_filter,
+                         sort_by=sort_by,
+                         order=order,
+                         total_count=total_count,
+                         filtered_count=filtered_count,
+                         status_counts=status_counts)
 
 @task_bp.route('/tasks/create', methods=['GET', 'POST'])
 @login_required

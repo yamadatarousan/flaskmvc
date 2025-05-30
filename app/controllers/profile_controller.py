@@ -4,6 +4,7 @@ from app import db
 from app.models.profile import Profile
 from app.models.user import User
 from app.forms.profile_form import ProfileForm
+from sqlalchemy import or_
 
 profile_bp = Blueprint('profile', __name__)
 
@@ -11,8 +12,71 @@ profile_bp = Blueprint('profile', __name__)
 @login_required
 def profile_list():
     """プロファイル一覧表示"""
-    profiles = Profile.query.join(User).all()
-    return render_template('profile_list.html', profiles=profiles)
+    # 検索・フィルタリングパラメータを取得
+    search_query = request.args.get('search', '')
+    user_filter = request.args.get('user', '')
+    sort_by = request.args.get('sort', 'user_name')
+    order = request.args.get('order', 'asc')
+    
+    # ベースクエリ
+    query = Profile.query.join(User)
+    
+    # 検索条件を適用
+    if search_query:
+        search_pattern = f"%{search_query}%"
+        query = query.filter(
+            or_(
+                User.name.ilike(search_pattern),
+                Profile.address.ilike(search_pattern),
+                Profile.phone_number.ilike(search_pattern)
+            )
+        )
+    
+    # ユーザーフィルター
+    if user_filter:
+        query = query.filter(Profile.user_id == user_filter)
+    
+    # ソート条件を適用
+    if sort_by == 'user_name':
+        if order == 'desc':
+            query = query.order_by(User.name.desc())
+        else:
+            query = query.order_by(User.name.asc())
+    elif sort_by == 'address':
+        if order == 'desc':
+            query = query.order_by(Profile.address.desc())
+        else:
+            query = query.order_by(Profile.address.asc())
+    elif sort_by == 'phone_number':
+        if order == 'desc':
+            query = query.order_by(Profile.phone_number.desc())
+        else:
+            query = query.order_by(Profile.phone_number.asc())
+    elif sort_by == 'birth_date':
+        if order == 'desc':
+            query = query.order_by(Profile.birth_date.desc())
+        else:
+            query = query.order_by(Profile.birth_date.asc())
+    else:  # created_at
+        if order == 'desc':
+            query = query.order_by(Profile.created_at.desc())
+        else:
+            query = query.order_by(Profile.created_at.asc())
+    
+    profiles = query.all()
+    users_for_filter = User.query.all()
+    total_count = Profile.query.count()
+    filtered_count = len(profiles)
+    
+    return render_template('profile_list.html', 
+                         profiles=profiles,
+                         users_for_filter=users_for_filter,
+                         search_query=search_query,
+                         user_filter=user_filter,
+                         sort_by=sort_by,
+                         order=order,
+                         total_count=total_count,
+                         filtered_count=filtered_count)
 
 @profile_bp.route('/profiles/create', methods=['GET', 'POST'])
 @login_required

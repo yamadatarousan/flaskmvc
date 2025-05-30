@@ -5,6 +5,7 @@ from app.models.user import User
 from app.forms.user_form import UserForm
 from app import db
 from app.utils import log_info, log_error
+from sqlalchemy import or_
 
 bp = Blueprint('user', __name__, url_prefix='/users')
 
@@ -14,9 +15,55 @@ bp = Blueprint('user', __name__, url_prefix='/users')
 def list_users():
     try:
         log_info("Accessing user list route from user_controller")
-        users = User.query.all()
-        log_info(f"Found {len(users)} users in user_controller")
-        return render_template('user_list.html', users=users)
+        
+        # 検索パラメータを取得
+        search_query = request.args.get('search', '')
+        sort_by = request.args.get('sort', 'name')
+        order = request.args.get('order', 'asc')
+        
+        # ベースクエリ
+        query = User.query
+        
+        # 検索条件を適用
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    User.name.ilike(search_pattern),
+                    User.email.ilike(search_pattern)
+                )
+            )
+        
+        # ソート条件を適用
+        if sort_by == 'name':
+            if order == 'desc':
+                query = query.order_by(User.name.desc())
+            else:
+                query = query.order_by(User.name.asc())
+        elif sort_by == 'email':
+            if order == 'desc':
+                query = query.order_by(User.email.desc())
+            else:
+                query = query.order_by(User.email.asc())
+        elif sort_by == 'created_at':
+            if order == 'desc':
+                query = query.order_by(User.created_at.desc())
+            else:
+                query = query.order_by(User.created_at.asc())
+        
+        users = query.all()
+        total_count = User.query.count()
+        filtered_count = len(users)
+        
+        log_info(f"Found {filtered_count}/{total_count} users with search: '{search_query}'")
+        
+        return render_template('user_list.html', 
+                             users=users,
+                             search_query=search_query,
+                             sort_by=sort_by,
+                             order=order,
+                             total_count=total_count,
+                             filtered_count=filtered_count)
     except Exception as e:
         log_error(f"Error in list_users: {e}")
         return render_template('error.html', error=str(e)), 500
