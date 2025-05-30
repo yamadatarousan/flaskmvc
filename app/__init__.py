@@ -94,11 +94,13 @@ def create_app():
     from app.controllers.task_controller import task_bp
     from app.controllers.profile_controller import profile_bp
     from app.controllers.auth_controller import auth_bp
+    from app.controllers.dashboard_controller import dashboard_bp
     app.register_blueprint(user_controller.bp)
     app.register_blueprint(user_controller.root_bp)
     app.register_blueprint(task_bp)
     app.register_blueprint(profile_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
     
     # シンプルなテストルート
     @app.route('/test')

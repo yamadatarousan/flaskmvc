@@ -1,0 +1,365 @@
+{% extends "layout.html" %}
+
+{% block title %}ダッシュボード{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+.dashboard-card {
+    transition: transform 0.2s;
+}
+.dashboard-card:hover {
+    transform: translateY(-2px);
+}
+.stat-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+.activity-item {
+    border-left: 3px solid #007bff;
+    padding-left: 15px;
+}
+.activity-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- ページヘッダー -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+            </h1>
+            <p class="text-muted">システムの統計情報とアクティビティを確認できます</p>
+        </div>
+    </div>
+
+    <!-- 統計カード -->
+    <div class="row mb-4">
+        <!-- 総ユーザー数 -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 dashboard-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                総ユーザー数
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.total_users | default(0) }}
+                            </div>
+                            <div class="text-xs text-success mt-1">
+                                <i class="fas fa-arrow-up"></i>
+                                新規: {{ stats.new_users | default(0) }}人 (7日間)
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users stat-icon text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 総タスク数 -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 dashboard-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                総タスク数
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.total_tasks | default(0) }}
+                            </div>
+                            <div class="text-xs text-success mt-1">
+                                <i class="fas fa-arrow-up"></i>
+                                新規: {{ stats.new_tasks | default(0) }}件 (7日間)
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks stat-icon text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 完了タスク数 -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 dashboard-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                完了タスク
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.completed_tasks | default(0) }}
+                            </div>
+                            <div class="text-xs mt-1">
+                                完了率: {{ task_stats.completion_rate | default(0) }}%
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle stat-icon text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 期限切れタスク -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 dashboard-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                期限切れタスク
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.overdue_tasks | default(0) }}
+                            </div>
+                            <div class="text-xs text-warning mt-1">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                要注意
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock stat-icon text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- チャートセクション -->
+    <div class="row mb-4">
+        <!-- タスク作成トレンド（折れ線グラフ） -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line me-2"></i>タスク作成トレンド（過去7日間）
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="taskTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- タスクステータス分布（パイチャート） -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie me-2"></i>タスクステータス分布
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下部セクション -->
+    <div class="row">
+        <!-- ユーザー別タスク数 -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user-friends me-2"></i>ユーザー別タスク数（上位5人）
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if task_stats.user_task_counts %}
+                        {% for user_data in task_stats.user_task_counts %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="mr-3">
+                                <div class="icon-circle bg-primary">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small text-muted">{{ user_data.name }}</div>
+                                <div class="progress progress-sm">
+                                    <div class="progress-bar bg-primary" role="progressbar" 
+                                         style="width: {{ (user_data.count / task_stats.user_task_counts[0].count * 100) if task_stats.user_task_counts else 0 }}%">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-3">
+                                <div class="text-right">
+                                    <span class="text-xs font-weight-bold">{{ user_data.count }}件</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">データがありません</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近のアクティビティ -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list me-2"></i>最近のアクティビティ
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="activity-item mb-3 p-2">
+                            <div class="d-flex align-items-start">
+                                <div class="mr-3">
+                                    <i class="fas {{ activity.icon }} text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="text-sm">{{ activity.message }}</div>
+                                    <div class="text-xs text-muted">
+                                        <i class="fas fa-user"></i> {{ activity.user }} • 
+                                        <i class="fas fa-clock"></i> {{ activity.time }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">最近のアクティビティはありません</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js スクリプト -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 共通設定
+    Chart.defaults.font.family = 'Nunito, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    Chart.defaults.color = '#858796';
+
+    // タスク作成トレンドチャート
+    const trendCtx = document.getElementById('taskTrendChart');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.line_chart.labels | tojson | safe }},
+                datasets: [{
+                    label: 'タスク作成数',
+                    data: {{ chart_data.line_chart.data | tojson | safe }},
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    // ステータス分布パイチャート
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ chart_data.pie_chart.labels | tojson | safe }},
+                datasets: [{
+                    data: {{ chart_data.pie_chart.data | tojson | safe }},
+                    backgroundColor: {{ chart_data.pie_chart.colors | tojson | safe }},
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+.icon-circle {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.progress-sm {
+    height: 0.5rem;
+}
+</style>
+{% endblock %} 
